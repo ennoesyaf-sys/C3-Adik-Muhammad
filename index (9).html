@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Best Dressed C3</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;800&display=swap">
+<style>
+/* Layout: one slide per book activity. Denim-pocket title, dashed "stitch" edges, a thread-style progress line on top, Back/Next bar at the bottom. */
+:root{
+  --bg:#E8EDF6; --surface:#FFFFFF; --surface-2:#F1F4FA; --ink:#15214A; --ink-soft:#4B5779; --line:#C5CEE2;
+  --primary:#22397A; --on-primary:#FFFFFF;
+  --thread:#E8892B; --thread-soft:#FDEBD6;
+  --ok:#17703F; --ok-bg:#E1F3E8; --bad:#AD2A22; --bad-bg:#FBE6E3;
+  --denim:#3C60A8; --denim-deep:#27437F; --tile:#EEF2FA; --focus:#E8892B;
+  --font-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1530; --surface:#16214A; --surface-2:#1D2B5C; --ink:#EBF0FF; --ink-soft:#A9B5DA; --line:#33437C;
+    --primary:#A8BCFF; --on-primary:#0D1530;
+    --thread:#F2A04A; --thread-soft:#3A2C1B;
+    --ok:#7AD9A3; --ok-bg:#12372A; --bad:#FFA39B; --bad-bg:#3E1C1F;
+    --denim:#5F83D2; --denim-deep:#4B6CC0; --tile:#DCE4F5; --focus:#F2A04A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1530; --surface:#16214A; --surface-2:#1D2B5C; --ink:#EBF0FF; --ink-soft:#A9B5DA; --line:#33437C;
+  --primary:#A8BCFF; --on-primary:#0D1530;
+  --thread:#F2A04A; --thread-soft:#3A2C1B;
+  --ok:#7AD9A3; --ok-bg:#12372A; --bad:#FFA39B; --bad-bg:#3E1C1F;
+  --denim:#5F83D2; --denim-deep:#4B6CC0; --tile:#DCE4F5; --focus:#F2A04A;
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--font-body); font-size:17px; line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 24px;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.app{max-width:920px;margin-inline:auto}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0}
+h1:focus,h2:focus{outline:none}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+p{margin:0}
+button{font:inherit}
+
+/* Header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);padding-block:12px 6px}
+.top-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:16px}
+.rivet{width:16px;height:16px;border-radius:50%;background:var(--thread);box-shadow:inset 0 0 0 3px var(--bg),0 0 0 2px var(--thread)}
+.scorechip{font-weight:700;font-variant-numeric:tabular-nums;padding:3px 14px;border:2px dashed var(--thread);border-radius:999px;white-space:nowrap}
+.steps{display:flex;gap:4px;margin-top:6px}
+.steps button{flex:1;min-width:0;height:30px;padding:0;border:0;background:none;cursor:pointer;position:relative}
+.steps button::before{content:"";position:absolute;left:0;right:0;top:13px;border-top:3px dashed var(--line)}
+.steps button.seen::before{border-top-color:var(--primary)}
+.steps button[aria-current="step"]::before{border-top:4px solid var(--thread)}
+
+/* Slide card */
+.slide{position:relative;background:var(--surface);border-radius:20px;padding:clamp(24px,4.2vw,36px) clamp(20px,4vw,34px);margin-top:6px}
+.slide::before{content:"";position:absolute;inset:8px;border:2px dashed var(--line);border-radius:14px;pointer-events:none}
+.sh{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.num{flex:none;width:44px;height:44px;border-radius:50%;background:var(--primary);color:var(--on-primary);display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:22px;box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--thread)}
+.sh h2{font-size:clamp(22px,4.6vw,32px);line-height:1.15;flex:1 1 220px;min-width:0}
+.pts{margin-left:auto;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.help{color:var(--ink-soft);margin-bottom:14px}
+
+.vid{display:block;width:100%;max-width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;margin-bottom:14px}
+
+/* Title slide */
+.hero{display:flex;flex-wrap:wrap;gap:clamp(18px,4vw,36px);align-items:center}
+.pocket{width:clamp(96px,20vw,150px);height:auto;flex:none}
+.hero-text{flex:1 1 280px;min-width:0}
+.label{font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:13px;color:var(--ink-soft);margin-bottom:6px}
+.hero h1{font-size:clamp(46px,11vw,84px);line-height:.95;font-weight:800;margin-bottom:12px}
+.lead{font-size:19px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:16px 0 18px}
+.chips li{padding:3px 14px;border:2px dashed var(--thread);border-radius:999px;font-weight:700}
+.meta{color:var(--ink-soft);margin-bottom:20px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 20px;border-radius:999px;border:2px solid var(--primary);background:var(--primary);color:var(--on-primary);font-weight:700;cursor:pointer;transition:transform .12s}
+.btn:hover:not(:disabled){transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--primary)}
+.btn.hintb{background:transparent;color:var(--ink);border-color:var(--thread)}
+.btn.big{min-height:52px;padding:10px 32px;font-size:19px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Items */
+.items{display:grid;gap:14px}
+.item{background:var(--surface-2);border-radius:14px;padding:14px 16px;display:grid;gap:10px;min-width:0}
+.q{display:flex;gap:12px;align-items:baseline;min-width:0}
+.q label,.q p{min-width:0}
+.qn{flex:none;font-family:var(--font-display);font-weight:800;color:var(--primary);font-size:20px;min-width:1.2em}
+input[type="text"],textarea{font:inherit;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:84px}
+input[readonly],textarea[readonly]{background:var(--surface-2)}
+.sentence{line-height:2.1}
+.blank{display:inline-block;width:10ch;text-align:center;padding:2px 6px;border:0;border-bottom:3px solid var(--primary);border-radius:0;background:var(--surface)}
+.blank.ok{border-bottom-color:var(--ok);color:var(--ok);font-weight:700}
+.blank.bad{border-bottom-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.hint{background:var(--thread-soft);color:var(--ink);border:2px dashed var(--thread);border-radius:10px;padding:8px 12px}
+.out:empty{display:none}
+.nudge{color:var(--ink-soft);font-weight:700}
+.fb{display:flex;gap:10px;align-items:flex-start;border-radius:10px;padding:10px 12px}
+.fb.ok{background:var(--ok-bg);color:var(--ok)}
+.fb.bad{background:var(--bad-bg);color:var(--bad)}
+.fb.info{background:var(--surface);color:var(--ink);border:2px dashed var(--thread)}
+.fb > div{min-width:0}
+.fb strong{display:block}
+.ans{display:block;color:var(--ink);overflow-wrap:anywhere}
+.ic{width:22px;height:22px;flex:none;margin-top:1px}
+.keylist{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:4px;color:var(--ink)}
+.keylist li{display:flex;gap:8px;align-items:center}
+.keylist .ic{width:18px;height:18px;margin:0}
+.keylist .okc{color:var(--ok)} .keylist .badc{color:var(--bad)}
+
+/* True / false */
+.tf{display:flex;gap:10px;flex-wrap:wrap}
+.tfb{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:120px;min-height:46px;padding:8px 22px;border-radius:999px;border:2px solid currentColor;font-weight:700;cursor:pointer}
+.tfb.t{background:var(--ok-bg);color:var(--ok)}
+.tfb.f{background:var(--bad-bg);color:var(--bad)}
+.tfb:disabled{cursor:default}
+.tfb.dim{opacity:.4}
+.tfb.picked{box-shadow:0 0 0 3px var(--surface),0 0 0 5px currentColor}
+.tfb .ic{width:18px;height:18px;margin:0}
+
+/* Multiple choice */
+.opts{display:grid;gap:8px}
+.opt{display:flex;gap:12px;align-items:center;text-align:left;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:10px 14px;min-height:48px;cursor:pointer;width:100%}
+.opt:hover:not(:disabled){border-color:var(--primary)}
+.opt .l{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);font-weight:700}
+.opt:disabled{cursor:default;color:var(--ink)}
+.opt.ok{border-color:var(--ok);background:var(--ok-bg);color:var(--ok);font-weight:700}
+.opt.bad{border-color:var(--bad);background:var(--bad-bg);color:var(--bad)}
+.opt.ok .l,.opt.bad .l{background:transparent}
+
+/* Reading paper */
+.paper{background:radial-gradient(circle,var(--line) 4.5px,transparent 5.5px) 8px 0/20px 26px repeat-y,var(--surface-2);border-radius:12px;padding:16px 18px 18px 40px;margin-bottom:16px}
+.paper h3{font-size:20px;margin-bottom:8px}
+.readtext{max-width:65ch}
+.readtext b{color:var(--primary)}
+details{margin-bottom:14px}
+summary{cursor:pointer;font-weight:700;color:var(--primary);min-height:32px;display:flex;align-items:center}
+details .paper{margin-top:8px;margin-bottom:0}
+dl.gloss{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:8px 0 0}
+dl.gloss dt{font-weight:700} dl.gloss dd{margin:0}
+.notes-copy p{white-space:pre-wrap;background:var(--surface-2);border-radius:10px;padding:10px 12px;margin-top:6px}
+
+/* Matching */
+.slots{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:16px}
+.slot{flex:1 1 138px;max-width:182px;min-width:0;display:grid;gap:8px;padding:10px;background:var(--surface-2);border:2px dashed var(--line);border-radius:14px;color:var(--ink);cursor:pointer;text-align:center}
+.slot:disabled{cursor:default;color:var(--ink)}
+.slot .no{font-family:var(--font-display);font-weight:800;color:var(--ink-soft);font-size:14px}
+.slot .pic{background:var(--tile);border-radius:10px;aspect-ratio:4/3;display:block;max-width:100%}
+.slot .pic svg{width:100%;height:100%;display:block}
+.slot .w{min-height:36px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:700;border:2px solid var(--line);background:var(--surface);border-radius:8px;padding:4px 8px;overflow-wrap:anywhere}
+.slot .w.empty{color:var(--ink-soft);font-weight:400;font-size:15px}
+.slot.filled .w{border-color:var(--primary)}
+.slot.right{border:2px solid var(--ok)}
+.slot.wrong{border:2px solid var(--bad)}
+.slot .two{display:grid;gap:2px;justify-items:center}
+.slot .two small{font-weight:400;color:var(--ink-soft);font-size:14px}
+.slot .w .ic{width:18px;height:18px;margin:0}
+.slot.right .w{color:var(--ok);border-color:var(--ok)}
+.slot.wrong .w{color:var(--bad);border-color:var(--bad)}
+.bank{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:16px}
+.chipbtn{min-height:44px;padding:8px 20px;border-radius:999px;border:2px solid var(--primary);background:var(--surface);color:var(--primary);font-weight:700;cursor:pointer}
+.chipbtn[aria-pressed="true"]{background:var(--primary);color:var(--on-primary)}
+.chipbtn:disabled{opacity:.35;border-style:dashed;cursor:default}
+.match-actions{display:grid;gap:10px;justify-items:start}
+
+/* Brand */
+.fields{display:grid;gap:12px}
+.field{display:grid;gap:4px}
+.field label{font-weight:700}
+.hangtag{position:relative;margin-top:6px;padding:34px 18px 16px;background:var(--surface);border:2px dashed var(--thread);border-radius:12px 12px 16px 16px;max-width:380px}
+.hole{position:absolute;top:10px;left:50%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--bg);border:2px solid var(--thread)}
+.hangtag h3{font-size:26px;margin-bottom:8px;overflow-wrap:anywhere}
+.hangtag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0}
+.hangtag dt{font-weight:700;color:var(--ink-soft)}
+.hangtag dd{margin:0;overflow-wrap:anywhere}
+.brand-out{display:grid;gap:12px}
+
+/* Pronunciation */
+.pgrid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.pcard{flex:1 1 200px;max-width:260px;min-width:0;background:var(--surface-2);border-radius:14px;padding:16px;display:grid;gap:6px;text-align:center}
+.pw{font-family:var(--font-display);font-weight:800;font-size:30px;line-height:1.1;overflow-wrap:anywhere}
+.syl{font-weight:700;color:var(--primary);letter-spacing:.06em}
+.tip{color:var(--ink-soft);font-size:16px}
+.pcard .actions{justify-content:center;margin-top:6px}
+.said{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:700;cursor:pointer}
+.said input{width:22px;height:22px;accent-color:var(--primary)}
+
+/* Results */
+.big{font-family:var(--font-display);font-weight:800;font-size:clamp(52px,13vw,92px);line-height:1;font-variant-numeric:tabular-nums}
+.msg{font-size:20px;margin:8px 0 20px}
+.rows{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:8px;max-width:520px}
+.rows li{display:flex;align-items:baseline;gap:10px}
+.rows .lead-dots{flex:1;border-bottom:3px dotted var(--line);transform:translateY(-4px);min-width:12px}
+.rows .v{font-weight:700;font-variant-numeric:tabular-nums}
+.rows small{color:var(--ink-soft)}
+
+/* Bottom bar */
+.nav{position:sticky;bottom:0;z-index:9;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--bg);padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));margin-top:14px}
+.count{font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.nav .btn{min-width:96px}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="top-row">
+      <div class="brand"><span class="rivet" aria-hidden="true"></span>Best Dressed · C3</div>
+      <div class="scorechip" aria-live="polite">Score <span id="score">0 / 23</span></div>
+    </div>
+    <nav class="steps" id="steps" aria-label="Slides"></nav>
+  </header>
+
+  <main>
+    <!-- 0 Title -->
+    <section class="slide" id="s0" data-title="Start">
+      <div class="hero">
+        <svg class="pocket" viewBox="0 0 120 140" aria-hidden="true">
+          <path d="M8 8H112V92L60 130L8 92Z" fill="var(--denim)"/>
+          <path d="M8 8H112V20H8Z" fill="var(--denim-deep)"/>
+          <path d="M22 32H98V86L60 112L22 86Z" fill="none" stroke="var(--thread)" stroke-width="2.6" stroke-dasharray="7 5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="14" cy="14" r="3.4" fill="var(--thread)"/>
+          <circle cx="106" cy="14" r="3.4" fill="var(--thread)"/>
+        </svg>
+        <div class="hero-text">
+          <p class="label">Sprinter A · Unit C · Lesson 3</p>
+          <h1 tabindex="-1">Best Dressed</h1>
+          <p class="lead">Use adjectives to describe clothes.</p>
+          <ul class="chips" aria-label="Adjectives for today">
+            <li>clean</li><li>dirty</li><li>big</li><li>small</li><li>old</li><li>new</li><li>cheap</li><li>expensive</li>
+          </ul>
+          <p class="meta">Collect <strong id="total-pts">23</strong> points. Each answer shows its key right after you try.</p>
+          <button type="button" class="btn big" data-go="1">Start</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1 Video notes -->
+    <section class="slide" id="s1" data-title="1 Video" hidden>
+      <div class="sh"><span class="num">1</span><h2 tabindex="-1">Watch the video. Take some notes.</h2></div>
+      <video class="vid" controls preload="metadata" playsinline aria-label="Inside a Factory"><source src="inside-a-factory.mp4" type="video/mp4"></video>
+      <p class="help">Listen for the brand, the price, the fabric, the lasering machine and the last step.</p>
+      <label for="notes" class="label">My notes</label>
+      <textarea id="notes" rows="6" placeholder="Write what you hear and see"></textarea>
+    </section>
+
+    <!-- 2 Questions -->
+    <section class="slide" id="s2" data-title="2 Questions" hidden>
+      <div class="sh"><span class="num">2</span><h2 tabindex="-1">Answer the questions.</h2><span class="pts" data-g="q"></span></div>
+      <details class="notes-copy" id="notes-copy" hidden><summary>My notes</summary><p id="mynotes"></p></details>
+      <div class="items" id="h-q"></div>
+    </section>
+
+    <!-- 3 Matching -->
+    <section class="slide" id="s3" data-title="3 Matching" hidden>
+      <div class="sh"><span class="num">3</span><h2 tabindex="-1">Match the pictures with their names.</h2><span class="pts" data-g="m"></span></div>
+      <p class="help">Tap a word, then tap a picture. Tap a picture again to take the word back.</p>
+      <div class="slots" id="m-slots"></div>
+      <div class="bank" id="m-bank" role="group" aria-label="Words"></div>
+      <div class="match-actions">
+        <div class="actions">
+          <button type="button" class="btn" id="m-check" disabled>Check</button>
+          <button type="button" class="btn hintb" id="m-hintbtn" aria-expanded="false">Hint</button>
+        </div>
+        <div class="hint" id="m-hint" hidden>
+          <p>Which word fits each clue?</p>
+          <ul>
+            <li>material for making clothes</li>
+            <li>house of fabric</li>
+            <li>a pair of trousers</li>
+            <li>an activity to make clothes</li>
+            <li>fastening clothes or other items</li>
+          </ul>
+        </div>
+      </div>
+      <div class="out" id="m-out" aria-live="polite"></div>
+    </section>
+
+    <!-- 4 Reading -->
+    <section class="slide" id="s4" data-title="4 Reading" hidden>
+      <div class="sh"><span class="num">4</span><h2 tabindex="-1">Read the text. What is it about?</h2><span class="pts" data-g="rd"></span></div>
+      <div class="paper"><h3>Seven steps to make clothes</h3><p class="readtext"></p></div>
+      <details>
+        <summary>Word help</summary>
+        <dl class="gloss">
+          <dt>Pattern</dt><dd>A design used as a guide for making clothes.</dd>
+          <dt>Digital format</dt><dd>A computer version of the design.</dd>
+          <dt>Threads</dt><dd>The material used to sew fabric together.</dd>
+          <dt>Sewn</dt><dd>Stitched with a needle and thread.</dd>
+        </dl>
+      </details>
+      <div class="items" id="h-rd"></div>
+    </section>
+
+    <!-- 5 Fill in the blanks -->
+    <section class="slide" id="s5" data-title="5 Blanks" hidden>
+      <div class="sh"><span class="num">5</span><h2 tabindex="-1">Fill in the blanks.</h2><span class="pts" data-g="fb"></span></div>
+      <ul class="chips" id="h-bank" aria-label="Word bank"></ul>
+      <details><summary>Read the text again</summary><div class="paper"><h3>Seven steps to make clothes</h3><p class="readtext"></p></div></details>
+      <div class="items" id="h-fb"></div>
+    </section>
+
+    <!-- 6 True or false -->
+    <section class="slide" id="s6" data-title="6 True or false" hidden>
+      <div class="sh"><span class="num">6</span><h2 tabindex="-1">Read each sentence. Is it true or false?</h2><span class="pts" data-g="tf"></span></div>
+      <details><summary>Read the text again</summary><div class="paper"><h3>Seven steps to make clothes</h3><p class="readtext"></p></div></details>
+      <div class="items" id="h-tf"></div>
+    </section>
+
+    <!-- 7 Upcycle -->
+    <section class="slide" id="s7" data-title="7 Upcycle" hidden>
+      <div class="sh"><span class="num">7</span><h2 tabindex="-1">Write how you upcycle old clothes.</h2></div>
+      <div class="items" id="h-up"></div>
+    </section>
+
+    <!-- 8 Brand -->
+    <section class="slide" id="s8" data-title="8 Brand" hidden>
+      <div class="sh"><span class="num">8</span><h2 tabindex="-1">Create your own brand. What would you name it?</h2></div>
+      <div id="h-brand"></div>
+    </section>
+
+    <!-- 9 Pronunciation -->
+    <section class="slide" id="s9" data-title="9 Say it" hidden>
+      <div class="sh"><span class="num">9</span><h2 tabindex="-1">Practise saying these words.</h2><span class="pts" id="pr-count"></span></div>
+      <div class="pgrid" id="h-pr"></div>
+    </section>
+
+    <!-- 10 Review -->
+    <section class="slide" id="s10" data-title="10 Review" hidden>
+      <div class="sh"><span class="num">10</span><h2 tabindex="-1">Quick review.</h2><span class="pts" data-g="rv"></span></div>
+      <div class="items" id="h-rv"></div>
+    </section>
+
+    <!-- 11 Score -->
+    <section class="slide" id="s11" data-title="Score" hidden>
+      <div class="label">Your score</div>
+      <h2 tabindex="-1" class="big" id="r-big">0 / 23</h2>
+      <p class="msg" id="r-msg"></p>
+      <ul class="rows" id="r-rows"></ul>
+      <p class="help">Activities 1, 7, 8 and 9 have no score.</p>
+      <button type="button" class="btn" id="again">Try again</button>
+    </section>
+  </main>
+
+  <footer class="nav">
+    <button type="button" class="btn ghost" id="back">Back</button>
+    <span class="count" id="count">1 / 12</span>
+    <button type="button" class="btn" id="next">Start</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $=(s,r)=>(r||document).querySelector(s);
+const $$=(s,r)=>Array.prototype.slice.call((r||document).querySelectorAll(s));
+const norm=s=>(s||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+const ICON_OK='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_BAD='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+const fb=(ok,title,body)=>'<div class="fb '+(ok?'ok':'bad')+'" role="status">'+(ok?ICON_OK:ICON_BAD)+'<div><strong>'+title+'</strong><span class="ans">'+body+'</span></div></div>';
+const wireHint=(btn,box)=>btn.addEventListener('click',()=>{box.hidden=!box.hidden;btn.setAttribute('aria-expanded',String(!box.hidden));});
+
+/* ---------- Data ---------- */
+const READ='Making clothes is a difficult job that involves seven different steps. <b>First</b>, the designer creates a pattern for the clothing on paper. This pattern is <b>then</b> turned into a digital format. <b>Next</b>, the pattern is adjusted to fit the desired size and shape. <b>After that</b>, the patterns are prepared for printing by making sure they fit the fabric correctly. <b>Once</b> the patterns are printed, the fabric is cut and assembled into sets. The workers <b>then</b> choose the right colour threads. <b>Before sewing</b>, each machine is adjusted to fit the needs. <b>Finally</b>, the clothing is sewn and finished so it can be sold.';
+
+const Q2=[
+ {q:'What is the name of the brand?',test:a=>/citizen/.test(a)&&/humanity/.test(a),key:'Citizen of Humanity Jeans',hint:'Listen at the start of the video. The name begins with the letter C.'},
+ {q:'How much is a pair of jeans?',test:a=>/200/.test(a),key:'It costs $200.',hint:'Listen for a price with a dollar sign.'},
+ {q:'Who selects the fabric of jeans?',test:a=>/design/.test(a),key:'The design team is in charge of it.',hint:'It is a team of people who decide how the jeans look.'},
+ {q:'What is the use of a lasering machine?',test:a=>/hole|distress|fade|special/.test(a),key:'It is used to create holes, a distressed look and special designs.',hint:'Think about jeans that look old and worn.'},
+ {q:'What is the last step before shipping the jeans?',test:a=>/quality|check|inspect/.test(a),key:'The last step is checking the quality of each pair of jeans.',hint:'A worker looks at every pair of jeans carefully.'}
+];
+
+const MWORDS=['Jeans','Fabric','Sewing','Zip','Warehouse'];
+const zipTeeth=(()=>{let t='';for(let x=14;x<=88;x+=7){t+='<rect x="'+x+'" y="39" width="5" height="5" rx="1" fill="#33506E"/><rect x="'+(x+3.5)+'" y="46" width="5" height="5" rx="1" fill="#33506E"/>';}return t;})();
+const MP=[
+ {w:'Fabric',alt:'Stack of folded fabric',clue:'material for making clothes',svg:'<svg viewBox="0 0 120 90" aria-hidden="true"><rect x="16" y="60" width="88" height="15" rx="4" fill="#EF8A47"/><rect x="20" y="45" width="84" height="15" rx="4" fill="#5E8CEA"/><rect x="14" y="30" width="90" height="15" rx="4" fill="#F2C14E"/><rect x="22" y="15" width="80" height="15" rx="4" fill="#6FB89F"/><path d="M22 67.5h76M26 52.5h72M20 37.5h78M28 22.5h68" stroke="#fff" stroke-opacity=".55" stroke-width="1.6" stroke-dasharray="4 4"/></svg>'},
+ {w:'Jeans',alt:'Denim shorts',clue:'a pair of trousers',svg:'<svg viewBox="0 0 120 90" aria-hidden="true"><path d="M28 16h64l5 52H66l-6-24-6 24H23z" fill="#3C60A8"/><rect x="28" y="16" width="64" height="9" fill="#27437F"/><path d="M60 25v19" stroke="#F2A04A" stroke-width="1.8" stroke-dasharray="3 2.5"/><path d="M33 30c0 8 5 12 11 12M87 30c0 8-5 12-11 12" fill="none" stroke="#F2A04A" stroke-width="1.6" stroke-dasharray="3 2.5"/><circle cx="60" cy="21" r="2.4" fill="#F2A04A"/><path d="M26 64h27M67 64h27" stroke="#F2A04A" stroke-width="1.6" stroke-dasharray="3 2.5"/></svg>'},
+ {w:'Zip',alt:'A zip',clue:'fastening clothes or other items',svg:'<svg viewBox="0 0 120 90" aria-hidden="true"><rect x="6" y="30" width="108" height="30" rx="5" fill="#7CC6E8"/>'+zipTeeth+'<rect x="88" y="35" width="16" height="20" rx="4" fill="#1F3258"/><rect x="102" y="41" width="12" height="8" rx="4" fill="#F2A04A"/></svg>'},
+ {w:'Sewing',alt:'Sewing machine',clue:'an activity to make clothes',svg:'<svg viewBox="0 0 120 90" aria-hidden="true"><rect x="18" y="64" width="86" height="10" rx="3" fill="#27437F"/><rect x="22" y="22" width="60" height="16" rx="8" fill="#4A6DD0"/><rect x="68" y="22" width="16" height="44" rx="4" fill="#4A6DD0"/><rect x="20" y="58" width="50" height="6" fill="#F2C14E"/><path d="M32 38v22" stroke="#8794B8" stroke-width="2"/><rect x="27" y="54" width="10" height="4" fill="#8794B8"/><circle cx="56" cy="16" r="5" fill="#EF8A47"/><circle cx="92" cy="34" r="8" fill="#F2A04A" stroke="#27437F" stroke-width="2"/></svg>'},
+ {w:'Warehouse',alt:'Warehouse shelves',clue:'house of fabric',svg:'<svg viewBox="0 0 120 90" aria-hidden="true"><rect x="12" y="8" width="4" height="72" fill="#3A4A73"/><rect x="58" y="8" width="4" height="72" fill="#3A4A73"/><rect x="104" y="8" width="4" height="72" fill="#3A4A73"/><rect x="12" y="32" width="96" height="3" fill="#3A4A73"/><rect x="12" y="54" width="96" height="3" fill="#3A4A73"/><rect x="12" y="76" width="96" height="3" fill="#3A4A73"/><rect x="19" y="18" width="14" height="14" fill="#F2C14E"/><rect x="35" y="14" width="16" height="18" fill="#EF8A47"/><rect x="65" y="16" width="14" height="16" fill="#5E8CEA"/><rect x="81" y="20" width="18" height="12" fill="#6FB89F"/><rect x="19" y="40" width="34" height="14" rx="7" fill="#5E8CEA"/><rect x="65" y="38" width="36" height="16" rx="8" fill="#D9534F"/><rect x="20" y="62" width="12" height="14" fill="#6FB89F"/><rect x="35" y="58" width="16" height="18" fill="#F2C14E"/><rect x="65" y="60" width="14" height="16" fill="#EF8A47"/><rect x="81" y="64" width="18" height="12" fill="#5E8CEA"/></svg>'}
+];
+
+const MC4={q:'What is the text about?',opts:['How to wash clothes','How to make clothes','How to sell clothes'],a:1,hint:'Read the first sentence of the text.',key:'About how to make clothes.',why:'The text explains the seven steps in making clothes, from designing to selling.'};
+
+const WORDS=['fabric','sewing','pattern','color','digital'];
+const FB=[
+ {pre:'The first step in making clothes is creating a ',post:' for the clothing on paper.',ok:['pattern'],ans:'pattern',hint:'It is a design on paper. It is a guide for making clothes.'},
+ {pre:'After the pattern is created on paper, it is turned into a ',post:' format.',ok:['digital'],ans:'digital',hint:'It means "on a computer".'},
+ {pre:'Before printing the patterns, we need to make sure that they fit the ',post:' correctly.',ok:['fabric'],ans:'fabric',hint:'It is the material used to make clothes.'},
+ {pre:'Once the fabric is cut and assembled into sets, workers choose the right ',post:' threads.',ok:['color','colour'],ans:'color',alt:' (or colour)',hint:'Red, blue and green are examples.'},
+ {pre:'The last step in making clothes before they can be sold is ',post:' and finishing the clothing.',ok:['sewing'],ans:'sewing',hint:'Find the last sentence of the text. Look at the word "sewn".'}
+];
+
+const TF=[
+ {s:'Making clothes is an easy job.',a:false,hint:'Find the first sentence of the text.',why:'The text says making clothes is a difficult job.'},
+ {s:'The first step in making clothes is creating a pattern on paper.',a:true,hint:'Look at the word "First".',why:'First, the designer creates a pattern on paper.'},
+ {s:'Once the pattern is created, it cannot be changed.',a:false,hint:'Look at the word "Next". What happens to the pattern?',why:'The pattern is adjusted to fit the desired size and shape.'},
+ {s:'Patterns are prepared for printing by making sure they fit the fabric correctly.',a:true,hint:'Look at the words "After that".',why:'The patterns are prepared for printing by making sure they fit the fabric correctly.'},
+ {s:'The fabric is cut and assembled into sets after the patterns are printed.',a:true,hint:'Look at the word "Once".',why:'Once the patterns are printed, the fabric is cut and assembled into sets.'}
+];
+
+const UP=[
+ {label:'Old jeans with holes',ideas:'Patch them with colourful fabric or embroidery, turn them into shorts, or make a tote bag.'},
+ {label:'Dirty denim jacket with stains',ideas:'Paint over the stains, add patches, or sew on new designs.'},
+ {label:'Dirty long-sleeve top with stains',ideas:'Tie-dye it, crop it into a new top, or use fabric markers to create designs.'}
+];
+
+const PR=[
+ {w:'Jeans',syl:'Jeans',tip:'One syllable. End with a z sound.'},
+ {w:'Sewing',syl:'Sew · ing',tip:'"Sew" sounds like "so".'},
+ {w:'Zip',syl:'Zip',tip:'One short syllable.'},
+ {w:'Warehouse',syl:'Ware · house',tip:'Say "ware" and "house" clearly.'},
+ {w:'Fabric',syl:'Fab · ric',tip:'Stress the first part: FAB-ric.'}
+];
+
+const RV=[
+ {q:'What is "fabric"?',opts:['A machine that makes holes','The material used to make clothes','A place to keep clothes'],a:1,hint:'Think about what clothes are made from.',key:'The material used to make clothes.'},
+ {q:'What is the last step before shipping the jeans?',opts:['Choosing the fabric','Making holes with a laser','Checking the quality'],a:2,hint:'A worker looks at every pair of jeans.',key:'Checking the quality.'}
+];
+
+/* ---------- Score ---------- */
+const GROUPS={q:{n:5,label:'Questions',act:2},m:{n:5,label:'Matching',act:3},rd:{n:1,label:'Reading',act:4},fb:{n:5,label:'Fill in the blanks',act:5},tf:{n:5,label:'True or false',act:6},rv:{n:2,label:'Review',act:10}};
+const TOTAL=Object.keys(GROUPS).reduce((a,k)=>a+GROUPS[k].n,0);
+let R={};
+const score=()=>Object.keys(R).filter(k=>R[k]).length;
+function groupGot(g){let n=0;for(let i=0;i<GROUPS[g].n;i++){if(R[g+i])n++;}return n;}
+function groupDone(g){let n=0;for(let i=0;i<GROUPS[g].n;i++){if(R[g+i]!==undefined)n++;}return n;}
+function updateScore(){
+  $('#score').textContent=score()+' / '+TOTAL;
+  $$('.pts[data-g]').forEach(el=>{const g=el.dataset.g;el.textContent=groupGot(g)+' / '+GROUPS[g].n;});
+}
+
+/* ---------- Builders ---------- */
+function buildQ(){
+  const host=$('#h-q');host.innerHTML='';
+  Q2.forEach((it,i)=>{
+    const id='q'+i,el=document.createElement('div');el.className='item';
+    el.innerHTML='<div class="q"><span class="qn">'+(i+1)+'</span><label for="'+id+'-in">'+it.q+'</label></div>'+
+      '<input type="text" id="'+id+'-in" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type your answer">'+
+      '<div class="actions"><button type="button" class="btn" data-a="check">Check</button><button type="button" class="btn hintb" data-a="hint" aria-expanded="false">Hint</button></div>'+
+      '<div class="hint" hidden></div><div class="out" aria-live="polite"></div>';
+    const inp=$('input',el),out=$('.out',el),hint=$('.hint',el),hb=$('[data-a=hint]',el),cb=$('[data-a=check]',el);
+    hint.textContent=it.hint;wireHint(hb,hint);
+    const check=()=>{
+      const v=norm(inp.value);
+      if(!v){out.innerHTML='<p class="nudge">Type an answer first.</p>';return;}
+      const ok=it.test(v);
+      inp.readOnly=true;cb.disabled=true;hb.disabled=true;
+      R[id]=ok;updateScore();
+      out.innerHTML=fb(ok,ok?'Correct!':'Not quite.','Answer: '+it.key);
+    };
+    cb.addEventListener('click',check);
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();check();}});
+    host.appendChild(el);
+  });
+}
+
+function buildMC(host,item,id,num){
+  const el=document.createElement('div');el.className='item';
+  el.innerHTML='<div class="q">'+(num?'<span class="qn">'+num+'</span>':'')+'<p><strong>'+item.q+'</strong></p></div>'+
+    '<div class="opts" role="group" aria-label="Choices">'+item.opts.map((o,k)=>'<button type="button" class="opt" data-k="'+k+'"><span class="l">'+'ABC'[k]+'</span><span>'+o+'</span></button>').join('')+'</div>'+
+    '<div class="actions"><button type="button" class="btn hintb" data-a="hint" aria-expanded="false">Hint</button></div>'+
+    '<div class="hint" hidden></div><div class="out" aria-live="polite"></div>';
+  const hint=$('.hint',el),hb=$('[data-a=hint]',el),out=$('.out',el),opts=$$('.opt',el);
+  hint.textContent=item.hint;wireHint(hb,hint);
+  opts.forEach(b=>b.addEventListener('click',()=>{
+    const k=+b.dataset.k,ok=k===item.a;
+    opts.forEach(o=>{o.disabled=true;});hb.disabled=true;
+    b.classList.add(ok?'ok':'bad');
+    if(!ok){opts[item.a].classList.add('ok');}
+    R[id]=ok;updateScore();
+    out.innerHTML=fb(ok,ok?'Correct!':'Not quite.','Answer: '+item.key+(item.why?' '+item.why:''));
+  }));
+  host.appendChild(el);
+}
+
+function buildFB(){
+  const bank=$('#h-bank');bank.innerHTML=WORDS.map(w=>'<li>'+w+'</li>').join('');
+  const host=$('#h-fb');host.innerHTML='';
+  FB.forEach((it,i)=>{
+    const id='fb'+i,el=document.createElement('div');el.className='item';
+    el.innerHTML='<div class="q"><span class="qn">'+(i+1)+'</span><p class="sentence">'+it.pre+'<input type="text" id="'+id+'-in" class="blank" aria-label="Blank '+(i+1)+'" autocomplete="off" autocapitalize="off" spellcheck="false">'+it.post+'</p></div>'+
+      '<div class="actions"><button type="button" class="btn" data-a="check">Check</button><button type="button" class="btn hintb" data-a="hint" aria-expanded="false">Hint</button></div>'+
+      '<div class="hint" hidden></div><div class="out" aria-live="polite"></div>';
+    const inp=$('input',el),out=$('.out',el),hint=$('.hint',el),hb=$('[data-a=hint]',el),cb=$('[data-a=check]',el);
+    hint.textContent=it.hint;wireHint(hb,hint);
+    const check=()=>{
+      const v=norm(inp.value);
+      if(!v){out.innerHTML='<p class="nudge">Type a word first.</p>';return;}
+      const ok=it.ok.indexOf(v)>-1;
+      inp.readOnly=true;cb.disabled=true;hb.disabled=true;
+      inp.classList.add(ok?'ok':'bad');
+      R[id]=ok;updateScore();
+      out.innerHTML=fb(ok,ok?'Correct!':'Not quite.','Answer: '+it.pre+'<strong>'+it.ans+'</strong>'+it.post+(it.alt||''));
+    };
+    cb.addEventListener('click',check);
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();check();}});
+    host.appendChild(el);
+  });
+}
+
+function buildTF(){
+  const host=$('#h-tf');host.innerHTML='';
+  TF.forEach((it,i)=>{
+    const id='tf'+i,el=document.createElement('div');el.className='item';
+    el.innerHTML='<div class="q"><span class="qn">'+(i+1)+'</span><p>'+it.s+'</p></div>'+
+      '<div class="tf" role="group" aria-label="True or false"><button type="button" class="tfb t" data-v="1">True</button><button type="button" class="tfb f" data-v="0">False</button></div>'+
+      '<div class="actions"><button type="button" class="btn hintb" data-a="hint" aria-expanded="false">Hint</button></div>'+
+      '<div class="hint" hidden></div><div class="out" aria-live="polite"></div>';
+    const hint=$('.hint',el),hb=$('[data-a=hint]',el),out=$('.out',el),btns=$$('.tfb',el);
+    hint.textContent=it.hint;wireHint(hb,hint);
+    btns.forEach(b=>b.addEventListener('click',()=>{
+      const pick=b.dataset.v==='1',ok=pick===it.a;
+      hb.disabled=true;
+      btns.forEach(x=>{
+        const v=x.dataset.v==='1';x.disabled=true;
+        const label=v?'True':'False';
+        if(x===b){x.classList.add('picked');x.innerHTML=(ok?ICON_OK:ICON_BAD)+label;}
+        else if(v===it.a){x.innerHTML=ICON_OK+label;}
+        else{x.classList.add('dim');}
+      });
+      R[id]=ok;updateScore();
+      out.innerHTML=fb(ok,ok?'Correct!':'Not quite.','Answer: <strong>'+(it.a?'True':'False')+'</strong>. '+it.why);
+    }));
+    host.appendChild(el);
+  });
+}
+
+function buildMatch(){
+  const slotsEl=$('#m-slots'),bankEl=$('#m-bank'),out=$('#m-out'),chk=$('#m-check');
+  const hb=$('#m-hintbtn'),hintBox=$('#m-hint');
+  hintBox.hidden=true;hb.disabled=false;hb.setAttribute('aria-expanded','false');out.innerHTML='';
+  const assign=[null,null,null,null,null];let sel=null,locked=false;
+  slotsEl.innerHTML=MP.map((p,i)=>'<button type="button" class="slot" data-i="'+i+'"><span class="no">'+(i+1)+'</span><span class="pic">'+p.svg+'</span><span class="w"></span></button>').join('');
+  bankEl.innerHTML=MWORDS.map(w=>'<button type="button" class="chipbtn" data-w="'+w+'" aria-pressed="false">'+w+'</button>').join('');
+  const slots=$$('.slot',slotsEl),chips=$$('.chipbtn',bankEl);
+  function refresh(){
+    slots.forEach((s,i)=>{
+      const w=assign[i],wEl=$('.w',s);
+      s.classList.toggle('filled',!!w);
+      wEl.classList.toggle('empty',!w);
+      if(!locked){wEl.textContent=w||'Tap to place';}
+      s.setAttribute('aria-label','Picture '+(i+1)+': '+MP[i].alt+'. '+(w?'Word: '+w+'.':'No word yet.'));
+    });
+    chips.forEach(c=>{const w=c.dataset.w;c.disabled=locked||assign.indexOf(w)>-1;c.setAttribute('aria-pressed',String(sel===w));});
+    chk.disabled=locked||assign.some(a=>!a);
+  }
+  slots.forEach((s,i)=>s.addEventListener('click',()=>{
+    if(locked)return;
+    if(sel){assign[i]=sel;sel=null;}else if(assign[i]){assign[i]=null;}
+    refresh();
+  }));
+  chips.forEach(c=>c.addEventListener('click',()=>{
+    if(locked)return;
+    const w=c.dataset.w;sel=sel===w?null:w;refresh();
+  }));
+  wireHint(hb,hintBox);
+  chk.onclick=()=>{
+    locked=true;sel=null;hb.disabled=true;
+    let n=0,list='';
+    slots.forEach((s,i)=>{
+      const ok=assign[i]===MP[i].w;if(ok)n++;
+      R['m'+i]=ok;
+      s.disabled=true;s.classList.add(ok?'right':'wrong');
+      const wEl=$('.w',s);
+      wEl.innerHTML=ok?ICON_OK+'<span>'+MP[i].w+'</span>':'<span class="two"><span>'+ICON_BAD.replace('class="ic"','class="ic"')+' '+MP[i].w+'</span><small>You chose '+assign[i]+'</small></span>';
+      list+='<li><span class="'+(ok?'okc':'badc')+'">'+(ok?ICON_OK:ICON_BAD)+'</span><span>'+(i+1)+'. <strong>'+MP[i].w+'</strong> – '+MP[i].clue+'</span></li>';
+    });
+    updateScore();refresh();
+    const all=n===5;
+    out.innerHTML='<div class="fb '+(all?'ok':'bad')+'" role="status">'+(all?ICON_OK:ICON_BAD)+'<div><strong>'+(all?'All correct!':n+' / 5 correct.')+'</strong><ul class="keylist">'+list+'</ul></div></div>';
+  };
+  refresh();
+}
+
+function buildUP(){
+  const host=$('#h-up');host.innerHTML='';
+  UP.forEach((it,i)=>{
+    const id='up'+i,el=document.createElement('div');el.className='item';
+    el.innerHTML='<div class="q"><span class="qn">'+(i+1)+'</span><label for="'+id+'-in"><strong>'+it.label+'</strong></label></div>'+
+      '<textarea id="'+id+'-in" rows="2" placeholder="I can ..."></textarea>'+
+      '<div class="actions"><button type="button" class="btn" data-a="check">Submit</button><button type="button" class="btn hintb" data-a="hint" aria-expanded="false">Hint</button></div>'+
+      '<div class="hint" hidden>Start with "I can ...". Use verbs like cut, sew, paint and draw.</div><div class="out" aria-live="polite"></div>';
+    const ta=$('textarea',el),out=$('.out',el),hint=$('.hint',el),hb=$('[data-a=hint]',el),cb=$('[data-a=check]',el);
+    wireHint(hb,hint);
+    cb.addEventListener('click',()=>{
+      if(ta.value.trim().split(/\s+/).filter(Boolean).length<3){out.innerHTML='<p class="nudge">Write your idea first (at least 3 words).</p>';return;}
+      ta.readOnly=true;cb.disabled=true;hb.disabled=true;
+      out.innerHTML='<div class="fb info" role="status">'+ICON_OK+'<div><strong>Good thinking!</strong><span class="ans">Possible ideas: '+it.ideas+'</span></div></div>';
+    });
+    host.appendChild(el);
+  });
+}
+
+function buildBrand(){
+  const host=$('#h-brand');
+  host.innerHTML='<div class="fields">'+
+    '<div class="field"><label for="b-name">Company name</label><input type="text" id="b-name" autocomplete="off"></div>'+
+    '<div class="field"><label for="b-col">Company colours</label><input type="text" id="b-col" autocomplete="off"></div>'+
+    '<div class="field"><label for="b-style">Company style</label><textarea id="b-style" rows="2"></textarea></div>'+
+    '<div class="field"><label for="b-other">Other information</label><input type="text" id="b-other" autocomplete="off"></div>'+
+    '<div class="actions"><button type="button" class="btn" id="b-go">Show my brand</button><button type="button" class="btn hintb" id="b-hint" aria-expanded="false">Hint</button></div>'+
+    '<div class="hint" id="b-hintbox" hidden>Think about eco-friendly clothing, a special group of customers (kids, teens, sportswear) or a unique fashion idea.</div>'+
+    '<div class="brand-out" id="b-out" aria-live="polite"></div></div>';
+  wireHint($('#b-hint'),$('#b-hintbox'));
+  $('#b-go').addEventListener('click',()=>{
+    const name=$('#b-name').value.trim(),out=$('#b-out');
+    if(!name){out.innerHTML='<p class="nudge">Write a company name first.</p>';return;}
+    out.innerHTML='';
+    const tag=document.createElement('div');tag.className='hangtag';
+    tag.innerHTML='<span class="hole" aria-hidden="true"></span><h3></h3><dl><dt>Colours</dt><dd></dd><dt>Style</dt><dd></dd><dt>More</dt><dd></dd></dl>';
+    $('h3',tag).textContent=name;
+    const dd=$$('dd',tag);
+    dd[0].textContent=$('#b-col').value.trim()||'–';
+    dd[1].textContent=$('#b-style').value.trim()||'–';
+    dd[2].textContent=$('#b-other').value.trim()||'–';
+    out.appendChild(tag);
+    const ex=document.createElement('div');ex.className='fb info';
+    ex.innerHTML=ICON_OK+'<div><strong>Example: Sky Palette</strong><span class="ans">Name: because the theme is colourful, it reminds us of the changing colours of the sky. The sky is our palette.<br>Style: colourful clothes. We make t-shirts, dresses, shorts and skirts.<br>Colours: bright green, yellow, electric blue and orange.</span></div>';
+    out.appendChild(ex);
+  });
+}
+
+function buildPR(){
+  const host=$('#h-pr');host.innerHTML='';
+  const canSpeak='speechSynthesis' in window&&typeof SpeechSynthesisUtterance!=='undefined';
+  const count=()=>{const n=$$('.said input',host).filter(c=>c.checked).length;$('#pr-count').textContent=n+' / '+PR.length+' practised';};
+  PR.forEach((it,i)=>{
+    const el=document.createElement('div');el.className='pcard';
+    el.innerHTML='<p class="pw">'+it.w+'</p><p class="syl">'+it.syl+'</p><p class="tip">'+it.tip+'</p>'+
+      '<div class="actions">'+(canSpeak?'<button type="button" class="btn ghost" data-a="say">Listen</button>':'')+
+      '<label class="said"><input type="checkbox" id="pr'+i+'"> I said it</label></div>';
+    const sb=$('[data-a=say]',el);
+    if(sb)sb.addEventListener('click',()=>{try{const u=new SpeechSynthesisUtterance(it.w);u.lang='en-GB';u.rate=.8;window.speechSynthesis.cancel();window.speechSynthesis.speak(u);}catch(e){}});
+    $('input',el).addEventListener('change',count);
+    host.appendChild(el);
+  });
+  count();
+}
+
+function buildRV(){
+  const host=$('#h-rv');host.innerHTML='';
+  RV.forEach((it,i)=>buildMC(host,it,'rv'+i,i+1));
+}
+function buildRD(){
+  const host=$('#h-rd');host.innerHTML='';
+  buildMC(host,MC4,'rd0',null);
+}
+
+function renderResults(){
+  const s=score();
+  $('#r-big').textContent=s+' / '+TOTAL;
+  const done=Object.keys(R).length,pct=s/TOTAL;
+  $('#r-msg').textContent=done===0?'No answers yet. Go back and try the activities.':pct>=.9?'Excellent work!':pct>=.7?'Well done!':pct>=.5?'Good try. Read the answers you missed again.':'Keep practising. Try again to improve your score.';
+  $('#r-rows').innerHTML=Object.keys(GROUPS).map(g=>{
+    const left=GROUPS[g].n-groupDone(g);
+    return '<li><span>'+GROUPS[g].act+'. '+GROUPS[g].label+(left?' <small>('+left+' not answered)</small>':'')+'</span><span class="lead-dots" aria-hidden="true"></span><span class="v">'+groupGot(g)+' / '+GROUPS[g].n+'</span></li>';
+  }).join('');
+}
+
+/* ---------- Navigation ---------- */
+const slides=$$('.slide');let cur=0;const seen={0:true};
+const stepsEl=$('#steps');
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');b.type='button';
+  b.setAttribute('aria-label','Slide '+(i+1)+': '+s.dataset.title);b.title=s.dataset.title;
+  b.addEventListener('click',()=>go(i));stepsEl.appendChild(b);
+});
+function go(i){
+  i=Math.max(0,Math.min(slides.length-1,i));cur=i;seen[i]=true;
+  slides.forEach((s,k)=>{s.hidden=k!==i;});
+  $$('button',stepsEl).forEach((b,k)=>{
+    b.classList.toggle('seen',!!seen[k]&&k!==i);
+    if(k===i)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');
+  });
+  $('#count').textContent=(i+1)+' / '+slides.length;
+  $('#back').disabled=i===0;
+  $('#next').hidden=i===slides.length-1;
+  $('#next').textContent=i===0?'Start':'Next';
+  if(i===2){const t=$('#notes').value.trim();$('#mynotes').textContent=t;$('#notes-copy').hidden=!t;}
+  if(i===slides.length-1)renderResults();
+  window.scrollTo(0,0);
+  const h=$('h1,h2',slides[i]);if(h)h.focus({preventScroll:true});
+}
+$('#back').addEventListener('click',()=>go(cur-1));
+$('#next').addEventListener('click',()=>go(cur+1));
+$$('[data-go]').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.go)));
+document.addEventListener('keydown',e=>{
+  if(e.altKey||e.ctrlKey||e.metaKey)return;
+  if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
+  if(e.key==='ArrowRight')go(cur+1);
+  if(e.key==='ArrowLeft')go(cur-1);
+});
+
+/* ---------- Init ---------- */
+function buildAll(){
+  R={};
+  $$('.readtext').forEach(e=>{e.innerHTML=READ;});
+  buildQ();buildMatch();buildRD();buildFB();buildTF();buildUP();buildBrand();buildPR();buildRV();
+  updateScore();
+}
+$('#total-pts').textContent=TOTAL;
+$('#again').addEventListener('click',()=>{
+  $('#notes').value='';
+  Object.keys(seen).forEach(k=>{delete seen[k];});
+  buildAll();go(0);
+});
+buildAll();
+go(0);
+})();
+</script>
+</body>
+</html>
